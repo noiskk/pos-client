@@ -1,0 +1,15 @@
+spring:
+  application:
+    name: pos-client
+
+server:
+  port: 6060
+  servlet:
+    encoding:
+      charset: UTF-8
+      enabled: true
+      force: true
+
+logging:
+  level:
+    com.pos.client: DEBUG

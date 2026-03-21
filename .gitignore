@@ -1,0 +1,33 @@
+# IntelliJ IDEA
+.idea/
+*.iml
+*.iws
+*.ipr
+/shelf/
+/workspace.xml
+bin/
+
+# Gradle
+.gradle/
+build/
+!gradle/wrapper/gradle-wrapper.jar
+!**/src/main/**/build/
+!**/src/test/**/build/
+
+# Java & Spring Boot (컴파일된 파일 및 로그)
+*.class
+*.log
+*.jar
+*.war
+*.zip
+*.tar.gz
+*.rar
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Security
+.env
+application-secret.yml
+application-prod.yml

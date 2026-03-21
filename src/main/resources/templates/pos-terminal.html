@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>스마트 POS 단말기</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            /* 배경색 */
+            background: #e2e8f0;
+            font-family: 'Noto Sans KR', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .pos-machine {
+            background-color: #1e293b; /* 다크 모드 슬레이트 색상 */
+            padding: 40px 35px;
+            border-radius: 24px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            width: 360px;
+            color: #f8fafc;
+            position: relative;
+        }
+        /* 포스기 상단의 카드 긁는 홈(Slot) 디자인 포인트 */
+        .pos-machine::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 120px;
+            height: 6px;
+            background: #334155;
+            border-bottom-left-radius: 8px;
+            border-bottom-right-radius: 8px;
+        }
+        h2 {
+            text-align: center;
+            color: #e2e8f0;
+            margin-top: 10px;
+            margin-bottom: 30px;
+            font-weight: 700;
+            font-size: 22px;
+            letter-spacing: -0.5px;
+        }
+        .form-group { margin-bottom: 24px; }
+        label {
+            font-weight: 500;
+            display: block;
+            margin-bottom: 8px;
+            color: #94a3b8;
+            font-size: 14px;
+        }
+        input[type="text"], input[type="number"] {
+            width: 100%;
+            padding: 16px;
+            background-color: #0f172a; /* 더 어두운 인풋 배경 */
+            border: 2px solid #334155;
+            border-radius: 12px;
+            box-sizing: border-box;
+            font-size: 18px;
+            color: #f8fafc;
+            transition: all 0.3s ease;
+        }
+        input::placeholder {
+            color: #475569;
+        }
+        input:focus {
+            outline: none;
+            border-color: #38bdf8; /* 네온 블루 포커스 */
+            box-shadow: 0 0 15px rgba(56, 189, 248, 0.2);
+        }
+        /* 금액 입력칸 */
+        .amount-input {
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 28px !important;
+            text-align: right;
+            color: #38bdf8 !important; /* 금액*/
+            font-weight: bold;
+        }
+        button {
+            width: 100%;
+            padding: 18px;
+            background: linear-gradient(135deg, #0284c7 0%, #0ea5e9 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 10px;
+            box-shadow: 0 10px 20px -5px rgba(14, 165, 233, 0.4);
+            transition: transform 0.1s, box-shadow 0.2s;
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 15px 25px -5px rgba(14, 165, 233, 0.5);
+        }
+        button:active {
+            transform: translateY(1px);
+            box-shadow: 0 5px 10px -5px rgba(14, 165, 233, 0.4);
+        }
+        /* 알림창 애니메이션 추가 */
+        .alert {
+            padding: 16px;
+            margin-top: 25px;
+            border-radius: 12px;
+            text-align: center;
+            font-weight: bold;
+            font-size: 15px;
+            animation: slideUp 0.3s ease-out;
+        }
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        /* 에러/성공 메시지 */
+        .alert-success {
+            background-color: rgba(34, 197, 94, 0.15);
+            color: #4ade80;
+            border: 1px solid rgba(34, 197, 94, 0.2);
+        }
+        .alert-danger {
+            background-color: rgba(239, 68, 68, 0.15);
+            color: #f87171;
+            border: 1px solid rgba(239, 68, 68, 0.2);
+        }
+    </style>
+</head>
+<body>
+
+<div class="pos-machine">
+    <h2>🏪 스마트 POS 시스템</h2>
+
+    <form action="/pay" method="post">
+        <input type="hidden" id="merchantId" name="merchantId" value="MERCH_CU_001">
+
+        <div class="form-group">
+            <label for="cardNumber">💳 카드 번호 (16자리)</label>
+            <input type="text" id="cardNumber" name="cardNumber" th:value="${cardNumber}" placeholder="카드 번호를 입력하세요" maxlength="16" required autocomplete="off">
+        </div>
+
+        <div class="form-group">
+            <label for="amount">💰 결제 금액 (원)</label>
+            <input type="number" id="amount" name="amount" th:value="${amount}" class="amount-input" placeholder="0" required autocomplete="off">
+        </div>
+
+        <button type="submit">승인 요청 (PAY)</button>
+    </form>
+
+    <div th:if="${successMsg}" class="alert alert-success" th:text="${successMsg}"></div>
+    <div th:if="${errorMsg}" class="alert alert-danger" th:text="${errorMsg}"></div>
+</div>
+
+</body>
+</html>
