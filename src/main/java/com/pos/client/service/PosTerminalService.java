@@ -78,14 +78,13 @@ public class PosTerminalService {
                 String fdsMessage = isoRes.getObjectValue(120);
                 log.info("[POS-Service] 응답 수신 완료 - 응답코드: {}, 메시지: {}", responseCode, fdsMessage);
 
-                // 6. 결과 분기 처리
+                // 6. 결과 분기 처리: 00이면 성공, 그 외 모든 코드는 사유+코드를 그대로 표시
                 if ("00".equals(responseCode)) {
                     return "SUCCESS";
-                } else if ("51".equals(responseCode)) {
-                    return fdsMessage != null ? fdsMessage : "알 수 없는 거절 사유 (응답코드: 51)";
-                } else {
-                    return "알 수 없는 거절 사유 (응답코드: " + responseCode + ")";
                 }
+                return (fdsMessage != null && !fdsMessage.isEmpty())
+                        ? fdsMessage + " (응답코드: " + responseCode + ")"
+                        : "결제 거절 (응답코드: " + responseCode + ")";
             } else {
                 return "VAN 서버로부터 응답을 받지 못했습니다.";
             }
