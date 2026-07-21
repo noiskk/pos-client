@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
+import java.util.concurrent.ThreadLocalRandom;
 
 @Slf4j
 @Service
@@ -56,6 +57,10 @@ public class PosTerminalService {
             // 클라이언트는 원본 금액에 "00"을 붙여서(x100) 처리
             String formattedAmount = amount + "00";
             isoReq.setValue(4, formattedAmount, IsoType.NUMERIC, 12);
+
+            // STAN(field 11): 거래 추적번호. 멱등키의 원점으로 사용된다.
+            String stan = String.format("%06d", ThreadLocalRandom.current().nextInt(1_000_000));
+            isoReq.setValue(11, stan, IsoType.NUMERIC, 6);
 
             isoReq.setValue(42, merchantId, IsoType.ALPHA, 15);
 
