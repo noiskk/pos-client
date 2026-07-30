@@ -1,5 +1,8 @@
 # 💳 POS Client (가맹점 POS 단말기 에뮬레이터)
 
+> 전체 시스템 개요·아키텍처·실행 방법 → **[card-payment-system](https://github.com/noiskk/card-payment-system)**
+> 관련 저장소: [van-service](https://github.com/noiskk/van-service) · [card-service](https://github.com/noiskk/card-service) · [bank-service](https://github.com/noiskk/bank-service)
+
 ## 📖 개요
 `pos-client`는 가맹점에 설치된 실제 POS 단말기의 동작을 모사(Emulate)하는 애플리케이션입니다. 
 
@@ -91,3 +94,50 @@ out.write(lengthBytes);
 out.write(messageBytes);
 out.flush();
 ```
+
+### 3. STAN — 멱등키의 원점
+
+**field 11(STAN, System Trace Audit Number)** 은 단말기가 거래마다 부여하는 6자리 추적번호다. 원래 목적은 요청 전문과 응답 전문을 짝지어 매칭하고 정산·대사에서 거래를 특정하는 것이다.
+
+이 프로젝트에서는 STAN을 **멱등키의 원점**으로 재활용한다.
+
+```java
+// 거래마다 6자리 추적번호를 부여한다. 재시도 시에도 같은 값을 유지해야 한다.
+String stan = String.format("%06d", ThreadLocalRandom.current().nextInt(1_000_000));
+isoReq.setValue(11, stan, IsoType.NUMERIC, 6);
+```
+
+네트워크가 끊기면 단말은 승인 성공 여부를 알 수 없어 재시도한다. 이때 같은 STAN을 실어 보내면 카드사가 "같은 결제의 재시도"임을 알아 이중결제를 막을 수 있다.
+
+다만 STAN은 6자리라 **단말기 하나 안에서만 유일**하고 순환·재사용된다. 그래서 VAN이 `가맹점ID + STAN`으로 조합해 전역 유일성을 확보한 뒤 카드사로 전달한다. (실무에서는 STAN + 단말기ID + 전송일자를 묶은 RRN을 쓰기도 한다)
+
+---
+
+## ▶️ 실행
+
+VAN 서비스가 TCP 7777에서 대기하고 있어야 한다.
+
+```bash
+sh gradlew bootRun
+```
+
+브라우저에서 **http://localhost:6060** 접속 → 카드번호 `4111111111111111`, 금액 `50000`, 가맹점 `MERCHANT-001` 입력.
+
+VAN 서버 주소는 환경변수로 바꿀 수 있다.
+
+```bash
+export VAN_SERVER_IP=127.0.0.1   # 기본값
+```
+
+### 시드 카드 (카드사 기준)
+
+| 카드번호 | 종류 | 특징 |
+|---|---|---|
+| `4111111111111111` | 체크 | 정상, 1회 한도 100만 / 계좌 잔액 100만 |
+| `5555555555554444` | 체크 | 계좌 잔액 5천원 → 잔액 부족(51) 테스트 |
+| `6011111111111117` | 신용 | 한도 500만, 1회 한도 200만 |
+| `3530111333300000` | 신용 | 잔여 한도 50만 → 한도 초과(51) 테스트 |
+| `5105105105105100` | 체크 | 정지 카드 → 차단(14) 테스트 |
+| `4012888888881881` | 신용 | 1회 한도 30만 |
+
+같은 카드로 3초 안에 다시 결제하면 카드사 FDS가 중복 거래로 차단한다(`94`).
